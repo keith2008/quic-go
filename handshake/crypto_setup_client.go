@@ -42,6 +42,7 @@ type cryptoSetupClient struct {
 	keyDerivation      KeyDerivationFunction
 
 	receivedSecurePacket bool
+	nullAEAD             crypto.AEAD
 	secureAEAD           crypto.AEAD
 	forwardSecureAEAD    crypto.AEAD
 	aeadChanged          chan struct{}
@@ -76,6 +77,7 @@ func NewCryptoSetupClient(
 		certManager:          crypto.NewCertManager(),
 		connectionParameters: connectionParameters,
 		keyDerivation:        crypto.DeriveKeysAESGCM,
+		nullAEAD:             crypto.NewNullAEAD(version),
 		aeadChanged:          aeadChanged,
 		negotiatedVersions:   negotiatedVersions,
 	}, nil
@@ -292,7 +294,7 @@ func (h *cryptoSetupClient) Open(dst, src []byte, packetNumber protocol.PacketNu
 		}
 	}
 
-	return (&crypto.NullAEAD{}).Open(dst, src, packetNumber, associatedData)
+	return h.nullAEAD.Open(dst, src, packetNumber, associatedData)
 }
 
 func (h *cryptoSetupClient) Seal(dst, src []byte, packetNumber protocol.PacketNumber, associatedData []byte) []byte {
@@ -302,7 +304,7 @@ func (h *cryptoSetupClient) Seal(dst, src []byte, packetNumber protocol.PacketNu
 	if h.secureAEAD != nil {
 		return h.secureAEAD.Seal(dst, src, packetNumber, associatedData)
 	}
-	return (&crypto.NullAEAD{}).Seal(dst, src, packetNumber, associatedData)
+	return h.nullAEAD.Seal(dst, src, packetNumber, associatedData)
 }
 
 func (h *cryptoSetupClient) DiversificationNonce() []byte {

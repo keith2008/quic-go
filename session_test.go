@@ -675,7 +675,7 @@ var _ = Describe("Session", func() {
 				session.conn.(*mockConnection).remoteAddr = remoteIP
 				// use the real packetUnpacker here, to make sure this test fails if the error code for failed decryption changes
 				session.unpacker = &packetUnpacker{}
-				session.unpacker.(*packetUnpacker).aead = &crypto.NullAEAD{}
+				session.unpacker.(*packetUnpacker).aead = crypto.NewNullAEAD(protocol.VersionWhatever)
 				p := receivedPacket{
 					remoteAddr:   attackerIP,
 					publicHeader: &PublicHeader{PacketNumber: 1337},
@@ -1095,7 +1095,7 @@ var _ = Describe("Session", func() {
 		It("uses ICSL after handshake", func(done Done) {
 			// session.lastNetworkActivityTime = time.Now().Add(-time.Minute)
 			*(*bool)(unsafe.Pointer(reflect.ValueOf(session.cryptoSetup).Elem().FieldByName("receivedForwardSecurePacket").UnsafeAddr())) = true
-			*(*crypto.AEAD)(unsafe.Pointer(reflect.ValueOf(session.cryptoSetup).Elem().FieldByName("forwardSecureAEAD").UnsafeAddr())) = &crypto.NullAEAD{}
+			*(*crypto.AEAD)(unsafe.Pointer(reflect.ValueOf(session.cryptoSetup).Elem().FieldByName("forwardSecureAEAD").UnsafeAddr())) = crypto.NewNullAEAD(protocol.VersionWhatever)
 			cpm.idleTime = 0 * time.Millisecond
 			session.packer.connectionParameters = session.connectionParameters
 			session.run() // Would normally not return
